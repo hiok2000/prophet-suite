@@ -1,4 +1,5 @@
 import argparse
+import importlib
 
 class Operator:
     def __init__(self):
@@ -8,6 +9,12 @@ class Operator:
     @property
     def flags(self):
         return self._flags
+
+    def call(self, module_name, function_name, args, kwargs):
+        mod = importlib.import_module(module_name)
+        func = getattr(mod, function_name)
+
+        return func(*args, **kwargs)
 
     def parse_args(self):
         self._parser.add_argument('--input-type', type=str, default='ES_Index',
@@ -32,6 +39,24 @@ class Operator:
 
         self._parser.add_argument('--test', action='store_true',
             help='Test switch')
+
+        self._parser.add_argument('--debug', action='store_true',
+            help='Debug switch')
+
+        self._parser.add_argument('--reader_module', type=str,
+            default='lib.reader',
+            help='Reader package and module name')
+
+        self._parser.add_argument('--reader_function', type=str,
+            default='read',
+            help='Reader function name')
+
+        self._parser.add_argument('--batch', action='store_true',
+            help='Batch or loop mode')
+
+        self._parser.add_argument('--loop_interval', type=int,
+            default=30000,
+            help='Execute interval for loop mode')
 
         self._flags, unparsed = self._parser.parse_known_args()
 
