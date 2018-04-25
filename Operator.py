@@ -17,18 +17,18 @@ class Operator:
         return func(*args, **kwargs)
 
     def parse_args(self):
-        self._parser.add_argument('--input-type', type=str, default='ES_Index',
+        self._parser.add_argument('--input_type', type=str, default='ES_Index',
             choices=['MongoDB_Collection', 'Redis_Channel', 'NSQ_Queue', 'ES_Index'],
             help='Data input method.')
 
-        self._parser.add_argument('--input-name', type=str, default='input',
+        self._parser.add_argument('--input_name', type=str, default='input',
             help='Data input name.')
 
-        self._parser.add_argument('--output-type', type=str, default='ES_Index',
+        self._parser.add_argument('--output_type', type=str, default='ES_Index',
             choices=['MongoDB_Collection', 'Redis_Channel', 'NSQ_Queue', 'ES_Index'],
             help='Data output method')
 
-        self._parser.add_argument('--output-name', type=str, default='output',
+        self._parser.add_argument('--output_name', type=str, default='output',
             help='Data output name.')
 
         self._parser.add_argument('--es_host', type=str, default='127.0.0.1',
@@ -55,10 +55,19 @@ class Operator:
             help='Batch or loop mode')
 
         self._parser.add_argument('--loop_interval', type=int,
-            default=30000,
+            default=1,
             help='Execute interval for loop mode')
+
+        self._parser.add_argument('--loop_window_minutes', type=int,
+            default=1440,
+            help='calculate the data for the  time period ')
+
+        self._parser.add_argument('--field', type=str,
+            default='@timestamp',
+            help='aggregate the field of ES index')
 
         self._flags, unparsed = self._parser.parse_known_args()
 
+        
     def test(self):
         print('This is the operator test, please override in your instance.')
