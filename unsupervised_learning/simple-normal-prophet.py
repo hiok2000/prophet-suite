@@ -149,12 +149,23 @@ class Rule_Prophet(Operator):
                 pass           
             print ("check  the  data  at ",(datetime.datetime.utcfromtimestamp(time.time())+datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S"),"........................")
             if start != end - 60000:  
-                print("start a new detection at ",(datetime.datetime.utcfromtimestamp(time.time())+datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S"),"........................")          
-                self.read_time_range_data(start_window, end)
-                self.detection(output_start)
-                self.write_alert()
+                try:
+                    print("start a new detection at ",(datetime.datetime.utcfromtimestamp(time.time())+datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S"),"........................")          
+                    self.read_time_range_data(start_window, end)  #@timestamp is millsecond，lt or lte dont produce the grave difference
+                    self.detection(output_start)
+                    self.write_alert()
+                    print("finish the detection at ",(datetime.datetime.utcfromtimestamp(time.time())+datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S"),"........................")          
+                except (KeyboardInterrupt):
+                    print ("-----You pressed Ctrl+C ！The loop is interrupted ")                
+                    sys.exit(0)
+                except (Exception):
+                    print (Exception)
 
-            time.sleep(self._flags.loop_interval/1000)
+            try:
+                time.sleep(self._flags.loop_interval / 1000)
+            except (KeyboardInterrupt):
+                    print ("------You pressed Ctrl+C！The loop is interrupted ")
+                    sys.exit(0)
 
 if __name__=="__main__":
     prophet = Rule_Prophet()
