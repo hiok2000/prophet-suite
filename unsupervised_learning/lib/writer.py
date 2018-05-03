@@ -134,7 +134,7 @@ if __name__=="__main__":
    
     es=Elasticsearch(host=host, port=port)   
   
-    index_name ="test"
+    index_name ="alert_tploader_duration_average"
     # Bulk index
     es.indices.delete(index=index_name, ignore=[400, 404])
 

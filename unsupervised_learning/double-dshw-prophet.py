@@ -145,7 +145,9 @@ class Rule_Prophet(Operator):
                 start_window=int(start-self._flags.loop_window_minutes*60000)                
             except (Exception):
                 pass
-                
+            except (KeyboardInterrupt):
+                print ("-----You pressed Ctrl+C ！The loop is interrupted ")                
+                sys.exit(0)                
             #end = int((time.time() // 60) * 60000)
             end = start+60000  #next  minute
             try:
@@ -165,7 +167,10 @@ class Rule_Prophet(Operator):
                 end = resp['aggregations']['latest_ts']['value']                
                 end=int((end // 60000) * 60000)   # the minute of end time                      
             except (Exception):
-                pass           
+                pass 
+            except (KeyboardInterrupt):
+                print ("-----You pressed Ctrl+C ！The loop is interrupted ")                
+                sys.exit(0)                                   
             print ("check  the  data  at ",(datetime.datetime.utcfromtimestamp(time.time())+datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S"),"........................")
             if start != end - 60000:  
                 try:

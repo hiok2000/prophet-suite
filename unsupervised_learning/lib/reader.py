@@ -374,12 +374,14 @@ def failratio_by_ts(es_host, es_port, data_index, start, end,field):
     )
     lines = []
     for item in resp['aggregations']['result']['buckets']:
+        
+        fail = item.get('fail-percentage', {'value': 0}) 
         line = {
             'ts': item['key_as_string'],
-            'value':item['fail-percentage']['value']
+            'value': round(fail['value'] ,2)     #round(item['fail-percentage']['value'],2)
         }
         lines.append(line)
-
+        
     data_frame = pd.DataFrame(lines)
     #data_frame.columns=["ts","total_count"]
     data_frame.columns=["datetime","value"]
@@ -578,7 +580,6 @@ def moving_max(es_host, es_port, data_index, start, end,field):
     data_frame["cleanvalue"]=data_frame["value"].interpolate()
     return data_frame     
 
-
 #--------------------------------5.std  aggregation functions---------------
 def std_by_ts(es_host, es_port, data_index, start, end,field):
     client = Elasticsearch(host=es_host, port=es_port)
@@ -673,4 +674,13 @@ def moving_std(es_host, es_port, data_index, start, end,field):
     data_frame.columns=["datetime","value"]
     data_frame["cleanvalue"]=data_frame["value"].interpolate()
     return data_frame     
-
+    
+if __name__=="__main__":
+    es_host="192.168.0.21"
+    es_port="9900"
+    start="2018-03-08T00:00:00"  
+    end="2018-04-04T00:00:00"  
+    data_index="mobile-mbank-*"
+    field="@timestamp"
+    df=failratio_by_ts(es_host, es_port, data_index, start, end,field)
+    print (df.head(10))
