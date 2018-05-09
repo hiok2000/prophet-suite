@@ -104,7 +104,7 @@ class Operator:
 
         ts = updated_at.timestamp()
         now = datetime.now().timestamp()
-        print('watchdog debug - my time: ', now, ' last feed: ', ts)
+        # print('watchdog debug - my time: ', now, ' last feed: ', ts)
 
         if now - ts > self._flags.watchdog_threshold:
             print('watchdog killing process - my time: ', now, ' last feed: ', ts)
