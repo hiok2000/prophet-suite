@@ -1,5 +1,9 @@
 import argparse
 import importlib
+from pymongo import MongoClient
+from datetime import datetime, timedelta, timezone
+from sys import exit
+from os import system
 
 class Operator:
     def __init__(self):
@@ -37,6 +41,12 @@ class Operator:
         self._parser.add_argument('--es_port', type=int, default=9200,
             help='Elasticsearch port')
 
+        self._parser.add_argument('--mongo_host', type=str, default='127.0.0.1',
+            help='MongoDB host')
+
+        self._parser.add_argument('--mongo_port', type=int, default=27017,
+            help='MongoDB port')
+
         self._parser.add_argument('--test', action='store_true',
             help='Test switch')
 
@@ -58,6 +68,10 @@ class Operator:
             default=1,
             help='Execute interval for loop mode')
 
+        self._parser.add_argument('--watchdog_threshold', type=int,
+            default=90,
+            help='Shutdown threshold for watchdog')
+
         self._parser.add_argument('--loop_window_minutes', type=int,
             default=1440,
             help='calculate the data for the  time period ')
@@ -66,8 +80,34 @@ class Operator:
             default='@timestamp',
             help='aggregate the field of ES index')
 
+        self._parser.add_argument('--task_name', type=str,
+            default='task',
+            help='task name from prophet-server')
+
         self._flags, unparsed = self._parser.parse_known_args()
 
         
     def test(self):
         print('This is the operator test, please override in your instance.')
+
+    def initWatchdog(self):
+        self._mongoClient = MongoClient(self._flags.mongo_host, self._flags.mongo_port)
+
+    def watchdog(self):
+        db = self._mongoClient['prophet-server']
+        collection = db.watchdogs
+        watchdog = collection.find_one()
+        updated_at = watchdog['updatedAt']
+
+        tz_utc = timezone(timedelta(hours=0))
+        updated_at = updated_at.replace(tzinfo=tz_utc)
+
+        ts = updated_at.timestamp()
+        now = datetime.now().timestamp()
+        print('watchdog debug - my time: ', now, ' last feed: ', ts)
+
+        if now - ts > self._flags.watchdog_threshold:
+            print('watchdog killing process - my time: ', now, ' last feed: ', ts)
+            # call pm2 to delete myself
+            system('pm2 delete {0}'.format(self._flags.task_name))
+            exit()

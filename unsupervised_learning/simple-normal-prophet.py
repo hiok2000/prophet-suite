@@ -36,6 +36,7 @@ class Rule_Prophet(Operator):
     def __init__(self):
         super(Rule_Prophet, self).__init__()
         self.parse_args()
+        self.initWatchdog()
 
     def parse_args(self):
         # add my own args
@@ -96,6 +97,8 @@ class Rule_Prophet(Operator):
 
     def loop(self):
         while True:
+            self.watchdog()
+            
             # get last computed ts
             client = Elasticsearch(
                 host=self._flags.es_host,
