@@ -32,6 +32,8 @@ class Rule_Prophet(Operator):
     def __init__(self):
         super(Rule_Prophet, self).__init__()
         self.parse_args()
+        self.initWatchdog()  
+     
 
     def parse_args(self):
         # add my own args
@@ -93,6 +95,8 @@ class Rule_Prophet(Operator):
 
     def loop(self):
         while True:
+            self.watchdog() 
+            
             print ("check  the  data  at ",(datetime.datetime.utcfromtimestamp(time.time())+datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S"),"........................")
             # get last computed ts
             client = Elasticsearch(
