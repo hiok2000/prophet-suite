@@ -16,15 +16,15 @@
 --input_name <INPUT_NAME>            #数据源index名称，在AIdefense的弹出框的I/O port部分设置
 --output-name <OUTPUT_NAME>          #输出index名称，在AIdefense的弹出框的I/O port部分设置
 
---es_host <ES_HOST>                  #ES数据库所在的IP
+--es_host <ES_HOST>                  #ES所在的主机（机器名或IP）
 --es_port <ES_PORT>                  #ES所在的PORT
 
---watchdog_threshold   <WATCHDOG_THRESHOLD>    #  
---mongo_host   <MONGO_HOST>           #mongo数据库所在IP   
+--watchdog_threshold   <WATCHDOG_THRESHOLD>    #看门狗的时限，超出该时限未收到Prophet-Server的心跳，则脚本自动退出
+--mongo_host   <MONGO_HOST>           #mongo所在主机（机器名或IP）   
 --mongo_port   <MONGO_PORT>           #mongo数据库所在PORT
 
 --loop_interval  <LOOP_INTERVAL>      #检查数据源（是否有更新）的时间间隔,以秒为单位，默认30秒，
---loop_window_minutes <LOOP_WINDOW_MINUTES>    #每次计算时，向前推移的时间窗口大小
+--loop_window_minutes <LOOP_WINDOW_MINUTES>    #每次计算时，向前推移的时间窗口大小（单位分钟）
 
 --reader_module <READER_MODULE>       #调用的读取脚本
 --reader_function  <READER_FUNCTION>  #调用的读取函数
