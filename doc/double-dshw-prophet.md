@@ -11,7 +11,8 @@
 
 算法参数分两类Operator.py定义的公共参数和算法脚本定义的局部参数。
 所有的参数都可在AIdefender的tasks页面的弹出框中设置。
-**Operator公共参数有：**  
+
+#### Operator公共参数有： 
 ```
 --input_name <INPUT_NAME>            #数据源index名称，在AIdefender的弹出框的I/O port部分设置
 --output-name <OUTPUT_NAME>          #输出index名称，在AIdefender的弹出框的I/O port部分设置
@@ -30,7 +31,7 @@
 --reader_function  <READER_FUNCTION>  #调用的读取函数
 ```
 
-**该算法的局部参数有： **
+#### 该算法的局部参数有：
 ```
 --metric_name <METRIC_NAME>           #告警名称，用在AIdefender泳道图中
 --cf <CF>                             #置信区间参数
@@ -44,7 +45,7 @@
 
 ## 调参技巧 
 
-```
+
 + --loop_interval：实时检测数据的时间间隔。目前默认值是30秒检查一次是否有新数据，以保证每隔一分钟都运行一次。如果代码运行时间间隔不变，该参数不需要调整。
 
     \*调参技巧：根据要求的运行时间间隔调参\*
@@ -79,7 +80,7 @@
 + --m2：周期二，一般设置较大的那个周期，默认7天
     \*调参技巧：结合业务理解，利用傅里叶算法求周期\*
 
-```
+
 
 
 
