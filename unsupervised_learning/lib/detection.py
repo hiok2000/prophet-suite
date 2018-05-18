@@ -100,10 +100,11 @@ def simple_normal_model(df,cf,direction,name,output_start,minimum=0) :   #df：t
     std=round(df["cleanvalue"].std(),2)
     upper_bound=mean+cf*std
     lower_bound=max(mean-cf*std,minimum)
-
-    if direction=="both":
+    
+    max_anom=0
+    if direction=="both" and upper_bound>0:
         max_anom=max(df["cleanvalue"]/upper_bound,lower_bound/df["cleanvalue"] if min(df["cleanvalue"])>0  else 6)
-    elif direction=="positive":
+    elif direction=="positive" and upper_bound>0 :
         max_anom=max(df["cleanvalue"]/upper_bound)
     elif direction=="negative":
         max_anom=max(lower_bound/df["cleanvalue"] if min(df["cleanvalue"])>0  else 6)
