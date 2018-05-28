@@ -96,7 +96,6 @@ class Rule_Prophet(Operator):
     def loop(self):
         while True:
             self.watchdog() 
-            
             print ("check  the  data  at ",(datetime.datetime.utcfromtimestamp(time.time())+datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S"),"........................")
             # get last computed ts
             client = Elasticsearch(
@@ -124,7 +123,8 @@ class Rule_Prophet(Operator):
                 start = resp['aggregations']['latest_ts']['value']
                 output_start=start +60000
                 start_window=int(start-self._flags.loop_window_minutes*60000)         #start_window=int(end-self._flags.loop_window_minutes*60000)               
-            except (Exception):
+            except Exception as e:
+                print ("test1",e)
                 pass
             except (KeyboardInterrupt):
                 print ("-----You pressed Ctrl+C ！The loop is interrupted ")                
@@ -147,12 +147,13 @@ class Rule_Prophet(Operator):
                 )
                 end = resp['aggregations']['latest_ts']['value']                
                 end=int((end // 60000) * 60000)   # the minute of end time                 
-            except (Exception):
+            except Exception as e:
+                print("test2",e)
                 pass    
             except (KeyboardInterrupt):
                 print ("-----You pressed Ctrl+C ！The loop is interrupted ")                
-                sys.exit(0)                               
-            #print ("read end:",datetime.datetime.utcfromtimestamp(end/1000).strftime("%Y-%m-%d %H:%M:%S"))       
+                sys.exit(0)
+                #optionprint ("read end:",datetime.datetime.utcfromtimestamp(end/1000).strftime("%Y-%m-%d %H:%M:%S"))       
             #print ("read start:",datetime.datetime.utcfromtimestamp(start_window/1000).strftime("%Y-%m-%d %H:%M:%S"))
             #print ("output start:",datetime.datetime.utcfromtimestamp(output_start/1000).strftime("%Y-%m-%d %H:%M:%S"))
 
@@ -166,8 +167,8 @@ class Rule_Prophet(Operator):
                 except (KeyboardInterrupt):
                     print ("-----You pressed Ctrl+C ！The loop is interrupted ")                
                     sys.exit(0)
-                except (Exception):
-                    print (Exception)
+                except Exception as e:
+                    print ("test3",e)
                     #traceback.print_exc()
             try:
                 time.sleep(self._flags.loop_interval / 1000)

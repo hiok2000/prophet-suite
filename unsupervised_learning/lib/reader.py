@@ -389,6 +389,79 @@ def failratio_by_ts(es_host, es_port, data_index, start, end,field):
     return data_frame     
 
 
+    
+def gfront_failratio_by_ts(es_host, es_port, data_index, start, end,field):
+    client = Elasticsearch(host=es_host, port=es_port)
+
+    resp = client.search(
+        index = data_index,
+        body = {
+            "query": {
+                "range": {
+                    "@timestamp": {
+                        "gte": start,
+                        "lt": end
+                    }
+                }
+            },
+            "size": 0,
+            "aggs": {
+                "result": {
+                    "date_histogram": {
+                        "field": "@timestamp",
+                        "interval": "minute", # or "1m"
+                        "format":"yyyy-MM-dd HH:mm:ss"
+                    },
+                    "aggs": {
+                        "total_count": { "value_count": { "field": field } },
+                        "total_sucess_count": {
+                                                "filter": {
+                                                        "term": {
+                                                                    "RspMsg.keyword": "交易成功"
+                                                                }
+                                                        },
+                                                "aggs": {
+                                                    "sucess_count": {"value_count": { "field": field }}
+                                                        }
+                                             },
+                        "fail-percentage": {
+                                        "bucket_script": {
+                                            "buckets_path": {
+                                                "total": "total_count",
+                                                "sucess": "total_sucess_count.sucess_count"
+                                                            },
+                                        "script": "100-params.sucess / params.total * 100"
+                                                        }
+                                            }
+
+
+                            }
+
+
+                    }
+
+
+
+
+                }
+            }
+       
+    )
+    lines = []
+    for item in resp['aggregations']['result']['buckets']:
+        
+        fail = item.get('fail-percentage', {'value': 0}) 
+        line = {
+            'ts': item['key_as_string'],
+            'value': round(fail['value'] ,2)     #round(item['fail-percentage']['value'],2)
+        }
+        lines.append(line)
+        
+    data_frame = pd.DataFrame(lines)
+    #data_frame.columns=["ts","total_count"]
+    data_frame.columns=["datetime","value"]
+    data_frame["cleanvalue"]=data_frame["value"].interpolate()
+    return data_frame     
 
 #--------------------------------3.sum  aggregation functions---------------
 def sum_by_ts(es_host, es_port, data_index, start, end,field):
