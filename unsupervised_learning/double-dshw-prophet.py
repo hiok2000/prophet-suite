@@ -33,6 +33,8 @@ from detection import double_dshw_model
 from writer import writer_bulk
 import clean
 import dshw
+from consts import *
+
 class Rule_Prophet(Operator):
     def __init__(self):
         super(Rule_Prophet, self).__init__()
@@ -121,7 +123,8 @@ class Rule_Prophet(Operator):
             # get last computed ts
             client = Elasticsearch(
                 host=self._flags.es_host,
-                port=self._flags.es_port
+                port=self._flags.es_port,
+                http_auth=(es_user, es_pwd)
             )
 
             # get range to compute

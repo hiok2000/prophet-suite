@@ -29,6 +29,8 @@ sys.path.append('./lib')
 from detection import single_normal_model
 from writer import writer_bulk
 import clean
+from consts import *
+
 class Rule_Prophet(Operator):
     def __init__(self):
         super(Rule_Prophet, self).__init__()
@@ -108,7 +110,8 @@ class Rule_Prophet(Operator):
             # get last computed ts
             client = Elasticsearch(
                 host=self._flags.es_host,
-                port=self._flags.es_port
+                port=self._flags.es_port,
+                http_auth=(es_user, es_pwd)
             )
 
             # get range to compute
