@@ -9,13 +9,12 @@ from elasticsearch import Elasticsearch,helpers
 import json
 import datetime
 #from pyes.connection import connect
-from .consts import *
 
 #------------------------------涓€銆乺ead  ES  data
 
 # Convert a panda's dataframe to json
 def append_index(host,port,df,ES_index,fromnrow):  #add
-    es=Elasticsearch(host=host, port=port, http_auth=(es_user, es_pwd))
+    es=Elasticsearch(host=host, port=port)
 # Add a id for looping into elastic search index
     #df["myindex"] = [x+1 for x in range(len(df.ix[:,0]))] #first column
 # Convert into json
@@ -32,7 +31,7 @@ def append_index(host,port,df,ES_index,fromnrow):  #add
         es.index(body=doc, index=index_name,doc_type="data")   #doc_type 鏄换鎰忚祴鍊肩殑
 #id=doc["myindex"],
 def update_index(host,port,df,ES_index):  #fromnrow 没用
-    es=Elasticsearch(host=host, port=port, http_auth=(es_user, es_pwd))
+    es=Elasticsearch(host=host, port=port)
 # Add a id for looping into elastic search index
     #df["myindex"] = [x+1 for x in range(len(df.ix[:,0]))] #first column
 # Convert into json
@@ -48,7 +47,7 @@ def update_index(host,port,df,ES_index):  #fromnrow 没用
         es.index(body=doc, index=index_name,doc_type="data")   #doc_type 鏄换鎰忚祴鍊肩殑
 
 def append_bulk(host,port,df,ES_index,fromnrow):  #add
-    es=Elasticsearch(host=host, port=port, http_auth=(es_user, es_pwd))
+    es=Elasticsearch(host=host, port=port)
     df=df.tail(fromnrow)
     tmp = df.to_json(orient = "records",date_format="iso")
     # Load each record into json format before bulk
@@ -73,7 +72,7 @@ def append_bulk(host,port,df,ES_index,fromnrow):  #add
             actions = []
 
 def update_bulk(host,port,df,ES_index):  #add
-    es=Elasticsearch(host=host, port=port, http_auth=(es_user, es_pwd))   
+    es=Elasticsearch(host=host, port=port)   
     tmp = df.to_json(orient = "records",date_format="iso")
     # Load each record into json format before bulk
     
@@ -100,7 +99,7 @@ def update_bulk(host,port,df,ES_index):  #add
             actions = []
 
 def writer_bulk(host,port,df,ES_index):  #add
-    es=Elasticsearch(host=host, port=port, http_auth=(es_user, es_pwd))
+    es=Elasticsearch(host=host, port=port)
     #if fromnrow>0:
     #   df=df[nrecord:]  #after n rows
     tmp = df.to_json(orient = "records",date_format="iso")   
@@ -131,11 +130,10 @@ if __name__=="__main__":
            #df["col3"]=[datetime.datetime.strptime(x,'%Y-%m-%d %H:%M:%S') for x in df["col1"]]                     #df["col1"].values.astype('datetime64[D]')
 
     host="192.168.0.21"
-    port="9900"
-   
-    es=Elasticsearch(host=host, port=port, http_auth=(es_user, es_pwd))   
+    port="9900"   
+    es=Elasticsearch(host=host, port=port)   
   
-    index_name ="alert_tploader_duration_average"
+    index_name ="test"
     # Bulk index
     es.indices.delete(index=index_name, ignore=[400, 404])
 

@@ -1,6 +1,8 @@
 #!/usr/bin/python5
+# add  a function in reader.py
 
-# python3 rule-any-prophet.py --es_host 192.168.0.21 --es_port 9900 --input-name mobile-mbank-log-2018.01 --reader_module lib.reader --reader_function aggs_avg_duration_by_ts
+
+# python3  double-dshw-prophet_1.0.py  --metric_name  dshw  --agg_index  test  --input_name  gfront-gfront-log-*   --output_name  result_dshw  --es_host 192.168.0.21 --es_port 9900   --reader_module lib.reader  --reader_function totalcount_by_ts  --field  @timestamp  --loop_interval 30000  --loop_window_minutes   80640   --cf  3  --direction both --minimum 0  --smoothing_window_minutes 30  --watchdog_threshold 90  --mongo_port 27017 --mongo_host 192.168.0.50
 
 from sys import exit
 from math import sqrt
@@ -33,6 +35,9 @@ from detection import double_dshw_model
 from writer import writer_bulk
 import clean
 import dshw
+from reader import query_by_ts
+
+
 class Rule_Prophet(Operator):
     def __init__(self):
         super(Rule_Prophet, self).__init__()
@@ -68,7 +73,13 @@ class Rule_Prophet(Operator):
         self._parser.add_argument('--m2', type=int,
             default=14400,
             help='the longer period ')
-    
+
+        self._parser.add_argument('--agg_index', type=str,   #new parametres:tasks :core_tux_queue_avg
+            default="test",
+            help='the agg result index ')
+
+
+
         # always call super at the end of parse_args
         super(Rule_Prophet, self).parse_args()
 
@@ -112,6 +123,11 @@ class Rule_Prophet(Operator):
         )
    
 
+    # def batch(self, start_window, end,output_start):
+    #     self.read_time_range_data(start_window, end)
+    #     self.detection(output_start)
+    #     self.write_alert()
+
     def loop(self):
         while True:
             self.watchdog() 
@@ -148,6 +164,58 @@ class Rule_Prophet(Operator):
                 print ("-----You pressed Ctrl+C ！The loop is interrupted ")                
                 sys.exit(0)                
             #end = int((time.time() // 60) * 60000)
+
+
+            agg_start = 0
+            try:
+                resp = client.search(
+                    #index = '%s-rule' % self._flags.input_name,
+                    index =self._flags.agg_index,
+                    body = {
+                        "size": 0,
+                        "aggs": {
+                            "latest_ts": {
+                                "max": { "field": "datetime" }
+                            }
+                        }
+                    }
+                )
+                
+                start1 = resp['aggregations']['latest_ts']['value']  #9:10  =[9:10:0,9:10:59]
+                agg_start=int(((start1+60000)//60000)*60000)            
+            except (Exception):
+                pass
+            except (KeyboardInterrupt):
+                print ("-----You pressed Ctrl+C ！The loop is interrupted ")                
+                sys.exit(0)      
+#----min
+            start2 = 0
+              
+            try:
+                resp = client.search(
+                    #index = '%s-rule' % self._flags.input_name,
+                    index =self._flags.agg_index,
+                    body = {
+                        "size": 0,
+                        "aggs": {
+                            "first_ts": {
+                                "min": { "field": "datetime" }
+                            }
+                        }
+                    }
+                )
+                
+                start2 = resp['aggregations']['first_ts']['value']  #9:10  =[9:10:0,9:10:59]
+                start2 =int(start2) 
+                             
+            except (Exception):
+                pass
+                
+            except (KeyboardInterrupt):
+                print ("-----You pressed Ctrl+C ！The loop is interrupted ")                
+                sys.exit(0)   
+            start_window = max(start_window,start2)
+
             end = start+60000  #next  minute
             try:
                 resp = client.search(
@@ -169,10 +237,9 @@ class Rule_Prophet(Operator):
                 pass 
             except (KeyboardInterrupt):
                 print ("-----You pressed Ctrl+C ！The loop is interrupted ")                
-                sys.exit(0)  
+                sys.exit(0)   
 
-
-                        #-------------forecast----------
+            #-------------forecast----------
             forecast_start=output_start
             forecast_index = self._flags.output_name+"_forecast"
             try:
@@ -197,15 +264,30 @@ class Rule_Prophet(Operator):
                 print ("-----You pressed Ctrl+C ！The loop is interrupted ")                
                 sys.exit(0)                
             #end = int((time.time() // 60) * 60000)
-            
-                                 
+
             print ("check  the  data  at ",(datetime.datetime.utcfromtimestamp(time.time())+datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S"),"........................")
+
+            print ("start ,agg_start , output_start ,end ,start_window :"  ,start ,agg_start , output_start ,end ,start_window )
+
+
             if start != end - 60000:  
                 try:
                     print("start a new detection at ",(datetime.datetime.utcfromtimestamp(time.time())+datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S"),"........................")          
-                    self.read_time_range_data(start_window, end)  #@timestamp is millsecond，lt or lte dont produce the grave difference
+                    self.read_time_range_data(agg_start, end)  #@timestamp is millsecond，lt or lte dont produce the grave difference
+                    
+                    self.df["datetime"]=pd.to_datetime(self.df["datetime"])   
+                    print (self.df.shape)
+                    output_index = self._flags.agg_index
+                    self.write_alert(output_index)
+
+
+                    self.df = query_by_ts(self._flags.es_host,self._flags.es_port,self._flags.agg_index,start_window, end,"datetime")       #read the agg data
                     #print (self.df)
+                    print (self.df.shape) 
+
                     self.detection(output_start,forecast_start)
+
+                    print (self.forecast,len(self.forecast))
                     output_index = self._flags.output_name
                     self.write_alert(output_index)
                     output_index = forecast_index
@@ -222,6 +304,8 @@ class Rule_Prophet(Operator):
             except (KeyboardInterrupt):
                     print ("------You pressed Ctrl+C！The loop is interrupted ")
                     sys.exit(0)
+
+
 if __name__=="__main__":
     prophet = Rule_Prophet()
 

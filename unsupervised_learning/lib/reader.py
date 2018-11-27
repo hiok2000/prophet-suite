@@ -3,14 +3,47 @@
 
 from elasticsearch import Elasticsearch  
 import pandas as pd
-from .consts import *
+import time
+from datetime import datetime
 
 #don't need the moving function
 #--------------------------------------1.average aggregation functions------
 #parameters:filed="string", start="2018-03-08T00:00:00",end="2018-03-09T00:00:00"
 
+def query_by_ts(es_host, es_port, data_index, start, end,field):
+    client = Elasticsearch(host=es_host, port=es_port)
+
+    resp = client.search(
+        index = data_index,
+        body = {
+            "query": {
+                "range": {
+                    "datetime": {
+                        "gte": start,
+                        "lt": end
+                    }
+                }
+            }
+        }
+    )
+    lines = []
+
+    for item in resp['hits']['hits']:
+        line = {
+            'datetime': datetime.strptime(item['_source']['datetime'],'%Y-%m-%dT%H:%M:%S.000Z'),
+            'value':item['_source']['value'],
+            'cleanvalue':item['_source']['cleanvalue']
+            
+        }
+        lines.append(line)
+    data_frame = pd.DataFrame(lines) 
+    data_frame = data_frame.filter(items=["datetime","value","cleanvalue"])
+    print (data_frame.head(10))
+    return data_frame   
+
+
 def average_by_ts(es_host, es_port, data_index, start, end,field):
-    client = Elasticsearch(host=es_host, port=es_port, http_auth=(es_user, es_pwd))
+    client = Elasticsearch(host=es_host, port=es_port)
 
     resp = client.search(
         index = data_index,
@@ -36,10 +69,6 @@ def average_by_ts(es_host, es_port, data_index, start, end,field):
 
 
                     }
-
-
-
-
                 }
             }
        
@@ -65,7 +94,7 @@ def average_by_ts(es_host, es_port, data_index, start, end,field):
 #最近10天：start="now-10d/d",end="now/d"
 #最近两个月：start="now-2M/M",end="now/M"
 def moving_average(es_host, es_port, data_index, start, end,field):
-    client = Elasticsearch(host=es_host, port=es_port, http_auth=(es_user, es_pwd))
+    client = Elasticsearch(host=es_host, port=es_port)
     resp = client.search(
         index = data_index,
         body = {
@@ -117,7 +146,7 @@ def moving_average(es_host, es_port, data_index, start, end,field):
 #-------------------------------2.count aggregation functions------
 
 def totalcount_by_ts(es_host, es_port, data_index, start, end,field):
-    client = Elasticsearch(host=es_host, port=es_port, http_auth=(es_user, es_pwd))
+    client = Elasticsearch(host=es_host, port=es_port)
 
     resp = client.search(
         index = data_index,
@@ -166,7 +195,7 @@ def totalcount_by_ts(es_host, es_port, data_index, start, end,field):
     return data_frame     
 
 def moving_totalcount(es_host, es_port, data_index, start, end,field):
-    client = Elasticsearch(host=es_host, port=es_port, http_auth=(es_user, es_pwd))
+    client = Elasticsearch(host=es_host, port=es_port)
 
     resp = client.search(
         index = data_index,
@@ -209,7 +238,7 @@ def moving_totalcount(es_host, es_port, data_index, start, end,field):
     return data_frame     
 
 def failcount_by_ts(es_host, es_port, data_index, start, end,field):
-    client = Elasticsearch(host=es_host, port=es_port, http_auth=(es_user, es_pwd))
+    client = Elasticsearch(host=es_host, port=es_port)
 
     resp = client.search(
         index = data_index,
@@ -266,7 +295,7 @@ def failcount_by_ts(es_host, es_port, data_index, start, end,field):
     return data_frame     
 
 def moving_failcount(es_host, es_port, data_index, start, end,field):
-    client = Elasticsearch(host=es_host, port=es_port, http_auth=(es_user, es_pwd))
+    client = Elasticsearch(host=es_host, port=es_port)
 
     resp = client.search(
         index = data_index,
@@ -317,7 +346,7 @@ def moving_failcount(es_host, es_port, data_index, start, end,field):
     return data_frame     
 #-----------------------------fail ratio  functions-----------------
 def failratio_by_ts(es_host, es_port, data_index, start, end,field):
-    client = Elasticsearch(host=es_host, port=es_port, http_auth=(es_user, es_pwd))
+    client = Elasticsearch(host=es_host, port=es_port)
 
     resp = client.search(
         index = data_index,
@@ -392,7 +421,7 @@ def failratio_by_ts(es_host, es_port, data_index, start, end,field):
 
     
 def gfront_failratio_by_ts(es_host, es_port, data_index, start, end,field):
-    client = Elasticsearch(host=es_host, port=es_port, http_auth=(es_user, es_pwd))
+    client = Elasticsearch(host=es_host, port=es_port)
 
     resp = client.search(
         index = data_index,
@@ -466,7 +495,7 @@ def gfront_failratio_by_ts(es_host, es_port, data_index, start, end,field):
 
 #--------------------------------3.sum  aggregation functions---------------
 def sum_by_ts(es_host, es_port, data_index, start, end,field):
-    client = Elasticsearch(host=es_host, port=es_port, http_auth=(es_user, es_pwd))
+    client = Elasticsearch(host=es_host, port=es_port)
 
     resp = client.search(
         index = data_index,
@@ -516,7 +545,7 @@ def sum_by_ts(es_host, es_port, data_index, start, end,field):
     return data_frame     
 
 def moving_sum(es_host, es_port, data_index, start, end,field):
-    client = Elasticsearch(host=es_host, port=es_port, http_auth=(es_user, es_pwd))
+    client = Elasticsearch(host=es_host, port=es_port)
 
     resp = client.search(
         index = data_index,
@@ -561,7 +590,7 @@ def moving_sum(es_host, es_port, data_index, start, end,field):
 
 #--------------------------------4.max  aggregation functions---------------
 def max_by_ts(es_host, es_port, data_index, start, end,field):
-    client = Elasticsearch(host=es_host, port=es_port, http_auth=(es_user, es_pwd))
+    client = Elasticsearch(host=es_host, port=es_port)
 
     resp = client.search(
         index = data_index,
@@ -611,7 +640,7 @@ def max_by_ts(es_host, es_port, data_index, start, end,field):
     return data_frame     
 
 def moving_max(es_host, es_port, data_index, start, end,field):
-    client = Elasticsearch(host=es_host, port=es_port, http_auth=(es_user, es_pwd))
+    client = Elasticsearch(host=es_host, port=es_port)
 
     resp = client.search(
         index = data_index,
@@ -656,7 +685,7 @@ def moving_max(es_host, es_port, data_index, start, end,field):
 
 #--------------------------------5.std  aggregation functions---------------
 def std_by_ts(es_host, es_port, data_index, start, end,field):
-    client = Elasticsearch(host=es_host, port=es_port, http_auth=(es_user, es_pwd))
+    client = Elasticsearch(host=es_host, port=es_port)
 
     resp = client.search(
         index = data_index,
@@ -706,7 +735,7 @@ def std_by_ts(es_host, es_port, data_index, start, end,field):
     return data_frame     
 
 def moving_std(es_host, es_port, data_index, start, end,field):
-    client = Elasticsearch(host=es_host, port=es_port, http_auth=(es_user, es_pwd))
+    client = Elasticsearch(host=es_host, port=es_port)
 
     resp = client.search(
         index = data_index,

@@ -46,11 +46,11 @@ import scipy.signal
 
 # by default, assume at least this many cycles of data when
 # establishing FFT window sizes.
-MIN_FFT_CYCLES = 3.0
+MIN_FFT_CYCLES = 3.0    #最少有3个周期
 
 # by default, assume periods of no more than this when establishing
 # FFT window sizes.
-MAX_FFT_PERIOD = 512
+MAX_FFT_PERIOD = 100000    #lz：512。最长周期不超过
 
 def periodogram_peaks(data, min_period=4, max_period=None, thresh=0.90):
     """return a list of intervals containg high-scoring periods

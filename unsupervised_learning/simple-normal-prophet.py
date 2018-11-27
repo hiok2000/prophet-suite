@@ -31,7 +31,6 @@ from Operator import Operator
 sys.path.append('./lib')
 from detection import simple_normal_model
 from writer import writer_bulk
-from consts import *
 
 class Rule_Prophet(Operator):
     def __init__(self):
@@ -103,8 +102,7 @@ class Rule_Prophet(Operator):
             # get last computed ts
             client = Elasticsearch(
                 host=self._flags.es_host,
-                port=self._flags.es_port,
-                http_auth=(es_user, es_pwd)
+                port=self._flags.es_port
             )
 
             # get range to compute
