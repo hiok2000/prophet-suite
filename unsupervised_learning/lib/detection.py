@@ -19,6 +19,7 @@ import  pickle
 import datetime
 import math
 import json
+from datetime import timedelta
 
 from elasticsearch import Elasticsearch
 #import my defined functions
@@ -26,9 +27,9 @@ from elasticsearch import Elasticsearch
 import writer
 import clean
 import dshw
+#df:datetime,cleanvalue
 
-
-def simple_threshold_model(df,direction,name,output_start,upper_bound=0,lower_bound=0) :   #df：the  data with fields(time,value),cf:confidence interval ,window
+def simple_threshold_model(df,direction,name,output_start,upper_bound=0,lower_bound=0) :   
     
     max_anom=0
     if direction=="both":
@@ -264,8 +265,14 @@ def single_normal_model(df,cf,direction,name,output_start,window=30,minimum=0) :
 
 #-------------------------------------------3-dshw------------------------------------------------------------------------
 
+<<<<<<< HEAD
 def double_dshw_model(df,cf,direction,name,output_start,window=30,minimum=0,m=1440,m2=1440*7) : #m 周期一，m2周期二
     forecast=10
+=======
+def double_dshw_model(df,cf,direction,name,output_start,forecast_start,window=30,minimum=0,m=1440,m2=1440*7) : #m 周期一，m2周期二
+    
+    forecast=1440   #10
+>>>>>>> 7e3b1e3ee09933f4bb6f4589c59c00bed89271d0
     #x=list(df["cleanvalue"])
     
     x=list(np.array(clean.running_median_insort(df["cleanvalue"], window)))
@@ -282,7 +289,7 @@ def double_dshw_model(df,cf,direction,name,output_start,window=30,minimum=0,m=14
     df=pd.merge(df,estimate,left_index=True,right_index=True,how="outer")  
    #df=pd.concat([df,estimate],axis=1)
     df["residual"]=df["cleanvalue"]-df["estimate"]  
-   
+    print (" dataframe :datetime"      ,df.head(10))
     rm_med=np.array(clean.running_median_insort(df["residual"], window))
    
     m=rm_med[~np.isnan(rm_med)].mean()
@@ -299,8 +306,11 @@ def double_dshw_model(df,cf,direction,name,output_start,window=30,minimum=0,m=14
     #print ("csv ok")
     df=df.filter(items=["datetime","value","cleanvalue","upper_bound","lower_bound"])
     
+<<<<<<< HEAD
     
     
+=======
+>>>>>>> 7e3b1e3ee09933f4bb6f4589c59c00bed89271d0
     if direction=="both":
         max_anom=max(max(df.loc[df["upper_bound"]>0 ,"cleanvalue"]/df.loc[df["upper_bound"]>0 ,"upper_bound"]) ,max(df.loc[df["cleanvalue"]>0,"lower_bound"]/df.loc[df["cleanvalue"]>0,"cleanvalue"]) if min(df["cleanvalue"])>0 else 6  )  
     elif direction=="positive":
@@ -368,4 +378,28 @@ def double_dshw_model(df,cf,direction,name,output_start,window=30,minimum=0,m=14
     #print (outliers.head(10))
     start=datetime.datetime.utcfromtimestamp(output_start/1000).strftime("%Y-%m-%d %H:%M:%S")
     output=output[output['createdAt']>=start]
-    return output
+
+    #-------  forcast  ----------
+    print ("len(fit[0]:         ",len(fit[0]))  
+    #print ("fit[0]         :    ",fit[0])
+    forecast = fit[0][1:]  #预测一天的值
+
+    forecast_start=datetime.datetime.utcfromtimestamp(forecast_start/1000).strftime("%Y-%m-%d %H:%M:%S")
+
+    #-----whole minute list--
+    starttime = pd.to_datetime(max(df['createdAt']),format='%Y-%m-%d %H:%M:%S')+timedelta(seconds=60)
+    timelist=[starttime.strftime("%Y-%m-%d %H:%M:%S")]
+    i = 0
+    while  i<len(forecast):
+        starttime += timedelta(seconds=60)
+        timelist.append(starttime.strftime("%Y-%m-%d %H:%M:%S"))
+        i += 1
+    timelist=pd.DataFrame(timelist)
+    timelist.columns=["time"]
+    forecast = pd.DataFrame(forecast)
+    forecast=pd.merge(timelist,forecast)
+    forecast.columns=["createdAt","forecast_value"]
+    add_forecast=forecast[forecast['createdAt']>=forecast_start] 
+    #print (type(cleandata))
+    #print (cleandata.head(10))
+    return output,add_forecast

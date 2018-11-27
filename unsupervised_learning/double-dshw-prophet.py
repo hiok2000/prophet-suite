@@ -87,33 +87,30 @@ class Rule_Prophet(Operator):
             }
         )
 
-    def write_alert(self):
+    def write_alert(self,output_index):
         writer_bulk(
             self._flags.es_host,
             self._flags.es_port,
             self.df,
-            self._flags.output_name
+            #self._flags.output_name
+            output_index
     
         )
 
-    def detection(self,output_start):
-        self.df = double_dshw_model(
+    def detection(self,output_start,forecast_start):
+        self.df,self.forecast = double_dshw_model(
                 self.df,
                 self._flags.cf,           
                 self._flags.direction,
                 self._flags.metric_name,
                 output_start,
+                forecast_start,
                 self._flags.smoothing_window_minutes,
                 self._flags.minimum,
                 self._flags.m,
-                self._flags.m2
+                self._flags.m2         
         )
    
-
-    def batch(self, start_window, end,output_start):
-        self.read_time_range_data(start_window, end)
-        self.detection(output_start)
-        self.write_alert()
 
     def loop(self):
         while True:
@@ -172,15 +169,52 @@ class Rule_Prophet(Operator):
                 pass 
             except (KeyboardInterrupt):
                 print ("-----You pressed Ctrl+C ！The loop is interrupted ")                
-                sys.exit(0)                                   
+                sys.exit(0)  
+
+
+                        #-------------forecast----------
+            forecast_start=output_start
+            forecast_index = self._flags.output_name+"_forecast"
+            try:
+                resp = client.search(
+                    #index = '%s-rule' % self._flags.input_name,
+                    index =forecast_index,
+                    body = {
+                        "size": 0,
+                        "aggs": {
+                            "latest_ts": {
+                                "max": { "field": "createdAt" }
+                            }
+                        }
+                    }
+                )
+                
+                start = resp['aggregations']['latest_ts']['value']  #9:10  =[9:10:0,9:10:59]
+                forecast_start=int(start+60000 )             
+            except (Exception):
+                pass
+            except (KeyboardInterrupt):
+                print ("-----You pressed Ctrl+C ！The loop is interrupted ")                
+                sys.exit(0)                
+            #end = int((time.time() // 60) * 60000)
+            
+                                 
             print ("check  the  data  at ",(datetime.datetime.utcfromtimestamp(time.time())+datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S"),"........................")
             if start != end - 60000:  
                 try:
                     print("start a new detection at ",(datetime.datetime.utcfromtimestamp(time.time())+datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S"),"........................")          
                     self.read_time_range_data(start_window, end)  #@timestamp is millsecond，lt or lte dont produce the grave difference
                     #print (self.df)
+<<<<<<< HEAD
                     self.detection(output_start)
                     self.write_alert()
+=======
+                    self.detection(output_start,forecast_start)
+                    output_index = self._flags.output_name
+                    self.write_alert(output_index)
+                    output_index = forecast_index
+                    self.write_alert(output_index)
+>>>>>>> 7e3b1e3ee09933f4bb6f4589c59c00bed89271d0
                     print("finish the detection at ",(datetime.datetime.utcfromtimestamp(time.time())+datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S"),"........................")          
                 except (KeyboardInterrupt):
                     print ("-----You pressed Ctrl+C ！The loop is interrupted ")                

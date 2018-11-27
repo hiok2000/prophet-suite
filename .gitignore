@@ -2,7 +2,11 @@
 __pycache__/
 *.py[cod]
 *$py.class
+<<<<<<< HEAD
 .vscode
+=======
+.vscode/
+>>>>>>> 7e3b1e3ee09933f4bb6f4589c59c00bed89271d0
 
 # C extensions
 *.so

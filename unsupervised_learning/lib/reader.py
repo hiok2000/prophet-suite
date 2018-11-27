@@ -6,6 +6,7 @@ from elasticsearch import helpers
 import pandas as pd
 import time
 from datetime import datetime
+<<<<<<< HEAD
 from consts import *
 
 def query_by_ts(es_host, es_port, data_index, start, end,field):
@@ -45,10 +46,44 @@ def query_by_ts(es_host, es_port, data_index, start, end,field):
     return data_frame
 
 
+=======
+>>>>>>> 7e3b1e3ee09933f4bb6f4589c59c00bed89271d0
 
 #don't need the moving function
 #--------------------------------------1.average aggregation functions------
 #parameters:filed="string", start="2018-03-08T00:00:00",end="2018-03-09T00:00:00"
+
+def query_by_ts(es_host, es_port, data_index, start, end,field):
+    client = Elasticsearch(host=es_host, port=es_port)
+
+    resp = client.search(
+        index = data_index,
+        body = {
+            "query": {
+                "range": {
+                    "datetime": {
+                        "gte": start,
+                        "lt": end
+                    }
+                }
+            }
+        }
+    )
+    lines = []
+
+    for item in resp['hits']['hits']:
+        line = {
+            'datetime': datetime.strptime(item['_source']['datetime'],'%Y-%m-%dT%H:%M:%S.000Z'),
+            'value':item['_source']['value'],
+            'cleanvalue':item['_source']['cleanvalue']
+            
+        }
+        lines.append(line)
+    data_frame = pd.DataFrame(lines) 
+    data_frame = data_frame.filter(items=["datetime","value","cleanvalue"])
+    print (data_frame.head(10))
+    return data_frame   
+
 
 def average_by_ts(es_host, es_port, data_index, start, end,field):
     client = Elasticsearch(host=es_host, port=es_port, http_auth=(es_user, es_pwd))
@@ -77,10 +112,6 @@ def average_by_ts(es_host, es_port, data_index, start, end,field):
 
 
                     }
-
-
-
-
                 }
             }
        
@@ -667,6 +698,7 @@ def wlqz_failratio_by_ts(es_host, es_port, data_index, start, end,field):
     return data_frame     
 
 
+<<<<<<< HEAD
  
 
 
@@ -688,6 +720,81 @@ def wlqz_failratio_by_ts(es_host, es_port, data_index, start, end,field):
 
 
 
+=======
+    
+def gfront_failratio_by_ts(es_host, es_port, data_index, start, end,field):
+    client = Elasticsearch(host=es_host, port=es_port)
+
+    resp = client.search(
+        index = data_index,
+        body = {
+            "query": {
+                "range": {
+                    "@timestamp": {
+                        "gte": start,
+                        "lt": end
+                    }
+                }
+            },
+            "size": 0,
+            "aggs": {
+                "result": {
+                    "date_histogram": {
+                        "field": "@timestamp",
+                        "interval": "minute", # or "1m"
+                        "format":"yyyy-MM-dd HH:mm:ss"
+                    },
+                    "aggs": {
+                        "total_count": { "value_count": { "field": field } },
+                        "total_sucess_count": {
+                                                "filter": {
+                                                        "term": {
+                                                                    "RspMsg.keyword": "交易成功"
+                                                                }
+                                                        },
+                                                "aggs": {
+                                                    "sucess_count": {"value_count": { "field": field }}
+                                                        }
+                                             },
+                        "fail-percentage": {
+                                        "bucket_script": {
+                                            "buckets_path": {
+                                                "total": "total_count",
+                                                "sucess": "total_sucess_count.sucess_count"
+                                                            },
+                                        "script": "100-params.sucess / params.total * 100"
+                                                        }
+                                            }
+
+
+                            }
+
+
+                    }
+
+
+
+
+                }
+            }
+       
+    )
+    lines = []
+    for item in resp['aggregations']['result']['buckets']:
+        
+        fail = item.get('fail-percentage', {'value': 0}) 
+        line = {
+            'ts': item['key_as_string'],
+            'value': round(fail['value'] ,2)     #round(item['fail-percentage']['value'],2)
+        }
+        lines.append(line)
+        
+    data_frame = pd.DataFrame(lines)
+    #data_frame.columns=["ts","total_count"]
+    data_frame.columns=["datetime","value"]
+    data_frame["cleanvalue"]=data_frame["value"].interpolate()
+    return data_frame     
+>>>>>>> 7e3b1e3ee09933f4bb6f4589c59c00bed89271d0
 
 #--------------------------------3.sum  aggregation functions---------------
 def sum_by_ts(es_host, es_port, data_index, start, end,field):
@@ -981,5 +1088,9 @@ if __name__=="__main__":
     end="2018-07-04T00:00:00"  
     data_index="wy-netbank-log-*"
     field="@timestamp"
+<<<<<<< HEAD
     df=netbank_failratio_by_ts(es_host, es_port, data_index, start, end,field)
+=======
+    df=failratio_by_ts(es_host, es_port, data_index, start, end,field)
+>>>>>>> 7e3b1e3ee09933f4bb6f4589c59c00bed89271d0
     print (df.head(10))

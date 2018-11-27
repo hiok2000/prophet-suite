@@ -130,12 +130,20 @@ if __name__=="__main__":
           #df["col1"]=df["col1"].astype(str)
            #df["col3"]=[datetime.datetime.strptime(x,'%Y-%m-%d %H:%M:%S') for x in df["col1"]]                     #df["col1"].values.astype('datetime64[D]')
 
+<<<<<<< HEAD
     host="98.11.56.20"
     port="10092"
    
     es=Elasticsearch(host=host, port=port, http_auth=(es_user, es_pwd))   
   
     index_name ="alert_csp_monlog_*"
+=======
+    host="192.168.0.21"
+    port="9900"   
+    es=Elasticsearch(host=host, port=port)   
+  
+    index_name ="test"
+>>>>>>> 7e3b1e3ee09933f4bb6f4589c59c00bed89271d0
     # Bulk index
     es.indices.delete(index=index_name, ignore=[400, 404])
 
