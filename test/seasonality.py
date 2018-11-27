@@ -6,6 +6,8 @@
 
     python3 seasonality.py --es_host 192.168.0.21 --es_port 9900  --input_name core-tploader-*   --reader_module reader  --reader_function average_by_ts  --field  duration --start 2018-03-08T00:00:00  --end 2018-05-08T00:00:00
 
+python3 seasonality.py --es_host 98.11.56.20 --es_port 10092  --input_name core-tploader-*   --reader_module reader  --reader_function average_by_ts  --field  duration --start 2018-03-08T00:00:00  --end 2018-05-08T00:00:00	
+
 """
 from __future__ import division
 from sys import exit

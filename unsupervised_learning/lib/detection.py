@@ -1,6 +1,5 @@
 #!/usr/bin/python5
 
-
 from sys import exit
 from math import sqrt
 import numpy as np
@@ -60,6 +59,10 @@ def simple_threshold_model(df,direction,name,output_start,upper_bound=0,lower_bo
             df["anom_index"]=round(lower_bound-df["cleanvalue"] ,2)+1
             df.loc[df["cleanvalue"]>=lower_bound,"anom_index"]=1
             df.loc[df["cleanvalue"]<=0,"anom_index"]=10
+        #df.loc[df["cleanvalue"]==lower_bound or df["cleanvalue"]==upper_bound,"anom_index"]=1
+        df.loc[df["cleanvalue"]==lower_bound,"anom_index"]=1
+        df.loc[df["cleanvalue"]==upper_bound,"anom_index"]=1
+
         df["serverity"]=[abs(y) for y in (round(math.log(x,max_anom)*0.95,4)*100 for x in df["anom_index"])]
         df.loc[df["serverity"]>95,"serverity"]=95
         df["level"]="WARNING" #
@@ -101,13 +104,13 @@ def simple_normal_model(df,cf,direction,name,output_start,minimum=0) :   #df：t
     upper_bound=mean+cf*std
     lower_bound=max(mean-cf*std,minimum)
     
-    max_anom=0
-    if direction=="both" and upper_bound>0:
-        max_anom=max(df["cleanvalue"]/upper_bound,lower_bound/df["cleanvalue"] if min(df["cleanvalue"])>0  else 6)
-    elif direction=="positive" and upper_bound>0 :
-        max_anom=max(df["cleanvalue"]/upper_bound)
-    elif direction=="negative":
-        max_anom=max(lower_bound/df["cleanvalue"] if min(df["cleanvalue"])>0  else 6)
+    max_anom = 0
+    if direction == "both" and upper_bound>0:
+        max_anom = max(df["cleanvalue"]/upper_bound,lower_bound/df["cleanvalue"] if min(df["cleanvalue"])>0  else 6)
+    elif direction == "positive" and upper_bound>0 :
+        max_anom = max(df["cleanvalue"]/upper_bound)
+    elif direction == "negative":
+        max_anom = max(lower_bound/df["cleanvalue"] if min(df["cleanvalue"])>0  else 6)
 
     if max_anom<=1:
         #print ("max_anom:",max_anom)
@@ -130,6 +133,10 @@ def simple_normal_model(df,cf,direction,name,output_start,minimum=0) :   #df：t
             df["anom_index"]=round(lower_bound/df["cleanvalue"] if df["cleanvalue"]>0  else 10,2)
             df.loc[df["cleanvalue"]>=lower_bound,"anom_index"]=1
             df.loc[df["cleanvalue"]<=0,"anom_index"]=10
+        #df.loc[df["cleanvalue"]==lower_bound or df["cleanvalue"]==upper_bound,"anom_index"]=1
+        df.loc[df["cleanvalue"]==lower_bound,"anom_index"]=1
+        df.loc[df["cleanvalue"]==upper_bound,"anom_index"]=1
+            
         df["serverity"]=[abs(y) for y in (round(math.log(x,max_anom)*0.95,4)*100 for x in df["anom_index"])]
         df.loc[df["serverity"]>95,"serverity"]=95
         df["level"]="WARNING" #
@@ -163,6 +170,7 @@ def simple_normal_model(df,cf,direction,name,output_start,minimum=0) :   #df：t
    
 def single_normal_model(df,cf,direction,name,output_start,window=30,minimum=0) :   #df：the  data with fields(time,value),cf:confidence interval ,window
     #minmum>0
+    #df["cleanvalue"] = np.array(clean.running_median_insort(df["cleanvalue"], 5))# update
     rm_med=np.array(clean.running_median_insort(df["cleanvalue"], window))  #window for slipping
     df["time"]=[x[11:] for x in df["datetime"]]
     rm_med_mean=round(df.groupby(df['time'])['cleanvalue'].mean(),2)
@@ -183,10 +191,12 @@ def single_normal_model(df,cf,direction,name,output_start,window=30,minimum=0) :
 
     df=pd.merge(df,baselines)   
     df=df.filter(items=["datetime","time","value","cleanvalue","mean","upper_bound","lower_bound"])
+    df.to_csv("/home/voyager/windows/lz-deploy/test_df2.csv")
+    print ("write ok")
     if direction=="both":
-        max_anom=max(max(df["cleanvalue"]/df["upper_bound"]) ,max(df.loc[df["cleanvalue"]>0,"lower_bound"]/df.loc[df["cleanvalue"]>0,"cleanvalue"]) if min(df["cleanvalue"])>0 else 6  )  
+        max_anom=max(max(df.loc[df["upper_bound"]>0 ,"cleanvalue"]/df.loc[df["upper_bound"]>0 ,"upper_bound"]) ,max(df.loc[df["cleanvalue"]>0,"lower_bound"]/df.loc[df["cleanvalue"]>0,"cleanvalue"]) if min(df["cleanvalue"])>0 else 6  )  
     elif direction=="positive":
-        max_anom=max(df["cleanvalue"]/df["upper_bound"])
+        max_anom=max(df.loc[df["upper_bound"]>0 ,"cleanvalue"]/df.loc[df["upper_bound"]>0 ,"upper_bound"])
     elif direction=="negative":
         max_anom=max(df["lower_bound"]/df["cleanvalue"]) if min(df["cleanvalue"])>0 else 6
     if max_anom<=1:
@@ -199,6 +209,7 @@ def single_normal_model(df,cf,direction,name,output_start,window=30,minimum=0) :
     if max_anom>1:
         #print (" detecting  the data............ ")
         if direction=="both":
+         
             df["anom_index"]=round(df["cleanvalue"]/df["upper_bound"],2)
             df.loc[df["cleanvalue"]<df["lower_bound"] ,"anom_index"]=round(df.loc[df["cleanvalue"]<df["lower_bound"] ,"lower_bound"]/df.loc[df["cleanvalue"]<df["lower_bound"] ,"cleanvalue"] ,2) #if  df.loc[df["cleanvalue"]<df["lower_bound"] ,"cleanvalue"]>0 else 6
             df.loc[(df["cleanvalue"]<=df["upper_bound"]) & (df["cleanvalue"]>=df["lower_bound"]),"anom_index"]=1
@@ -210,6 +221,10 @@ def single_normal_model(df,cf,direction,name,output_start,window=30,minimum=0) :
             df.loc[df["cleanvalue"]>0,"anom_index"]=round(df.loc[df["cleanvalue"]>0,"lower_bound"]/df.loc[df["cleanvalue"]>0,"cleanvalue"] ,2)
             df.loc[df["cleanvalue"]>=df["lower_bound"],"anom_index"]=1
             df.loc[df["cleanvalue"]<=0,"anom_index"]=10
+        #df.loc[df["cleanvalue"]==df["lower_bound"] or df["cleanvalue"]==df["upper_bound"] ,"anom_index"]=1
+        df.loc[df["cleanvalue"]==df["lower_bound"],"anom_index"]=1
+        df.loc[df["cleanvalue"]==df["upper_bound"],"anom_index"]=1
+        
         df["serverity"]=[abs(y) for y in (round(math.log(x,max_anom)*0.95,4)*100 for x in df["anom_index"])]
         df.loc[df["serverity"]>95,"serverity"]=95
         df["level"]="WARNING" #
@@ -251,11 +266,15 @@ def single_normal_model(df,cf,direction,name,output_start,window=30,minimum=0) :
 
 def double_dshw_model(df,cf,direction,name,output_start,window=30,minimum=0,m=1440,m2=1440*7) : #m 周期一，m2周期二
     forecast=10
-    x=list(df["cleanvalue"])
+    #x=list(df["cleanvalue"])
+    
+    x=list(np.array(clean.running_median_insort(df["cleanvalue"], window)))
+    
     fit=dshw.double_seasonal(x, m=m, m2=m2,forecast=forecast, alpha = None, beta = None, gamma = None,delta=None,autocorrelation=None, initial_values_optimization=[0.1, 0.1, 0.2, 0.2, 0.9], optimization_type="MSE")
     #params=fit[1]
     #print ("alpha, beta, gamma, delta, autocorrelation:")
     #print (params)
+    
 
     estimate=fit[2][1:]  #历史预测值
     estimate=[round(x) for x in estimate]
@@ -275,13 +294,17 @@ def double_dshw_model(df,cf,direction,name,output_start,window=30,minimum=0,m=14
     #df["description"]="NORMAL"
     #df.loc[df["cleanvalue"]<df["lower_bound"],"description"]="too lower"
     #df.loc[(df["cleanvalue"]>df["upper_bound"]),"description"]="too higher"
-   
+    
+    #df.to_csv("/home/voyager/windows/lz-deploy/test_df.csv")
+    #print ("csv ok")
     df=df.filter(items=["datetime","value","cleanvalue","upper_bound","lower_bound"])
-
+    
+    
+    
     if direction=="both":
-        max_anom=max(max(df["cleanvalue"]/df["upper_bound"]) ,max(df.loc[df["cleanvalue"]>0,"lower_bound"]/df.loc[df["cleanvalue"]>0,"cleanvalue"]) if min(df["cleanvalue"])>0 else 6  )  
+        max_anom=max(max(df.loc[df["upper_bound"]>0 ,"cleanvalue"]/df.loc[df["upper_bound"]>0 ,"upper_bound"]) ,max(df.loc[df["cleanvalue"]>0,"lower_bound"]/df.loc[df["cleanvalue"]>0,"cleanvalue"]) if min(df["cleanvalue"])>0 else 6  )  
     elif direction=="positive":
-        max_anom=max(df["cleanvalue"]/df["upper_bound"])
+        max_anom=max(df.loc[df["upper_bound"]>0 ,"cleanvalue"]/df.loc[df["upper_bound"]>0 ,"upper_bound"])
     elif direction=="negative":
         max_anom=max(df["lower_bound"]/df["cleanvalue"]) if min(df["cleanvalue"])>0 else 6
     if max_anom<=1:
@@ -291,28 +314,34 @@ def double_dshw_model(df,cf,direction,name,output_start,window=30,minimum=0,m=14
         df["anom_index"]=1
         df["serverity"]=0
         df["level"]="NORMAL"
+    
     if max_anom>1:
         #print (" detecting  the data............ ")
         if direction=="both":
-            df["anom_index"]=round(df["cleanvalue"]/df["upper_bound"],2)
+            df["anom_index"]=1
+            df["anom_index"]=round(df.loc[df["upper_bound"]>0 ,"cleanvalue"]/df.loc[df["upper_bound"]>0 ,"upper_bound"],2)
             df.loc[df["cleanvalue"]<df["lower_bound"] ,"anom_index"]=round(df.loc[df["cleanvalue"]<df["lower_bound"] ,"lower_bound"]/df.loc[df["cleanvalue"]<df["lower_bound"] ,"cleanvalue"] ,2) #if  df.loc[df["cleanvalue"]<df["lower_bound"] ,"cleanvalue"]>0 else 6
             df.loc[(df["cleanvalue"]<=df["upper_bound"]) & (df["cleanvalue"]>=df["lower_bound"]),"anom_index"]=1
             df.loc[df["cleanvalue"]<=0,"anom_index"]=6
         if direction=="positive":
-            df["anom_index"]=round(df["cleanvalue"]/df["upper_bound"],2)
+            df["anom_index"]=1
+            df["anom_index"]=round(df.loc[df["upper_bound"]>0 ,"cleanvalue"]/df.loc[df["upper_bound"]>0 ,"upper_bound"],2)
             df.loc[df["cleanvalue"]<=df["upper_bound"],"anom_index"]=1
         if direction=="negative":
             df.loc[df["cleanvalue"]>0,"anom_index"]=round(df.loc[df["cleanvalue"]>0,"lower_bound"]/df.loc[df["cleanvalue"]>0,"cleanvalue"] ,2)
             df.loc[df["cleanvalue"]>=df["lower_bound"],"anom_index"]=1
             df.loc[df["cleanvalue"]<=0,"anom_index"]=10
+        #df.loc[df["cleanvalue"]==df["lower_bound"] or df["cleanvalue"]==df["upper_bound"] ,"anom_index"]=1    
+        df.loc[df["cleanvalue"]==df["lower_bound"],"anom_index"]=1
+        df.loc[df["cleanvalue"]==df["upper_bound"],"anom_index"]=1
+        
         df["serverity"]=[abs(y) for y in (round(math.log(x,max_anom)*0.95,4)*100 for x in df["anom_index"])]
         df.loc[df["serverity"]>95,"serverity"]=95
         df["level"]="WARNING" #
         df.loc[df["serverity"]==0,"level"]="NORMAL"
         df.loc[df["serverity"]>50,"level"]="ERROR"
-
     
-   
+    
     df["name"]=name
     df["timespan"]=60000  #做可选项比较好
 
