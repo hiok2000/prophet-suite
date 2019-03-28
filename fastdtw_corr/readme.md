@@ -55,6 +55,9 @@ more
 example
 ---
 
+具体内容详见上传的notebook文件
+
+
 ①首先根据时序数据计算相关系数矩阵,通过notebook中的scale函数计算并返回标准化之后的矩阵.并且保存
 
 timeseries_scale=scale(timeseries.iloc[:,:5])
