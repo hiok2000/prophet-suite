@@ -24,9 +24,7 @@ distance , pattern = fastdtw(s1,s2,dist=euclidean_norm)
 
 fastdtw:
 
-distance=0.2125
-
-pattern为[(0, 0), (1, 1), (2, 2), (3, 2), (4, 2)]
+distance=0.2125,path 为[(0, 0), (1, 1), (2, 2), (3, 2), (4, 2)]
 
 
 distance,C,D1,pattern=dtw(s1,s2,dist=euclidean_norm)
