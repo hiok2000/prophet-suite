@@ -20,13 +20,16 @@ example
 
 s1=[1, 2, 3, 2, 1]
 s2=[1, 0, 3]
+
 distance , pattern = fastdtw(s1,s2,dist=euclidean_norm)
 
 使用fastdtw得到之间的距离distance=0.2125
+
 路径pattern为[(0, 0), (1, 1), (2, 2), (3, 2), (4, 2)]
 
 
 distance,C,D1,pattern=dtw(s1,s2,dist=euclidean_norm)
+
 其中distance表示距离,pattern表示经过的路径
 
 经过dtw计算得到距离distance=0.2125,路径path为(array([0, 1, 2, 3, 4]), array([0, 1, 2, 2, 2]))
